@@ -1,35 +1,26 @@
 import pandas as pd
 from pymongo import MongoClient
 
-def load_csv(name):
-    return pd.read_csv(f"data/gold/{name}")
-
-def send_to_mongo(df, collection_name):
-
+def run():
     client = MongoClient("mongodb://localhost:27017/")
     db = client["projet_data"]
 
-    collection = db[collection_name]
+    # Lecture des fichiers Parquet
+    df_kpis = pd.read_parquet("data/gold/kpis_global.parquet")
+    df_pays = pd.read_parquet("data/gold/ventes_par_pays.parquet")
+    df_mois = pd.read_parquet("data/gold/ventes_par_mois.parquet")
 
-    # Vider l’ancienne collection
-    collection.delete_many({})
+    # Vider les anciennes collections et insérer les nouvelles
+    db.kpis.delete_many({})
+    db.kpis.insert_many(df_kpis.to_dict(orient="records"))
 
-    # insertion des nouvelles données
-    collection.insert_many(df.to_dict("records"))
+    db.ventes_par_pays.delete_many({})
+    db.ventes_par_pays.insert_many(df_pays.to_dict(orient="records"))
 
-    print(f"Données insérées dans {collection_name}")
+    db.ventes_par_mois.delete_many({})
+    db.ventes_par_mois.insert_many(df_mois.to_dict(orient="records"))
 
-
-def run():
-
-    kpis = load_csv("kpis_global.csv")
-    pays = load_csv("ventes_par_pays.csv")
-    mois = load_csv("ventes_par_mois.csv")
-
-    send_to_mongo(kpis, "kpis")
-    send_to_mongo(pays, "ventes_par_pays")
-    send_to_mongo(mois, "ventes_par_mois")
-
+    print("Données insérées dans MongoDB avec succès !")
 
 if __name__ == "__main__":
     run()

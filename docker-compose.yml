@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   minio:
     image: minio/minio:latest
@@ -13,11 +15,6 @@ services:
       - minio_data:/data
     networks:
       - elt-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
 
   minio-setup:
     image: minio/mc:latest
@@ -36,49 +33,39 @@ services:
       exit 0;
       "
 
-  postgres:
-    image: postgres:17-alpine
-    container_name: prefect-postgres
-    environment:
-      POSTGRES_USER: prefect
-      POSTGRES_PASSWORD: prefect
-      POSTGRES_DB: prefect
+  mongo:
+    image: mongo:7
+    container_name: mongo_local
     ports:
-      - "5432:5432"
+      - "27017:27017"
     volumes:
-      - prefect_db:/var/lib/postgresql/data
+      - mongo_data:/data/db
     networks:
       - elt-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U prefect"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
-  prefect-server:
-    image: prefecthq/prefect:3-python3.13
-    container_name: prefect-server
+  api:
+    build: ./api
+    container_name: api_flask
     ports:
-      - "4200:4200"
-    environment:
-      PREFECT_API_DATABASE_CONNECTION_URL: postgresql+asyncpg://prefect:prefect@postgres:5432/prefect
-      PREFECT_SERVER_API_HOST: 0.0.0.0
-      PREFECT_API_URL: http://localhost:4200/api
-    command: prefect server start --host 0.0.0.0
+      - "5000:5000"
     depends_on:
-      postgres:
-        condition: service_healthy
+      - mongo
     networks:
       - elt-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4200/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+
+  dashboard:
+    build: ./dashboard
+    container_name: dashboard_streamlit
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
+    networks:
+      - elt-network
 
 volumes:
   minio_data:
-  prefect_db:
+  mongo_data:
 
 networks:
   elt-network:

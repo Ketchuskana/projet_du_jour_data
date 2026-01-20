@@ -4,34 +4,28 @@ import time
 
 st.title("Dashboard Projet Data")
 
-api_url = "http://api:5000"
+API_URL = "http://api:5000"
 
-# Attendre que l'API Flask soit disponible
-max_retries = 10
-for i in range(max_retries):
-    try:
-        kpis = requests.get(f"{api_url}/kpis").json()
-        pays = requests.get(f"{api_url}/pays").json()
-        mois = requests.get(f"{api_url}/mois").json()
-        break
-    except requests.exceptions.ConnectionError:
-        st.write(f"API non disponible, tentative {i+1}/{max_retries}...")
-        time.sleep(2)
-else:
-    st.error("Impossible de se connecter à l'API Flask !")
+start = time.time()
 
-# Affichage des données
-if 'kpis' in locals():
-    start = time.time()
+try:
+    kpis = requests.get(f"{API_URL}/kpis").json()
+    pays = requests.get(f"{API_URL}/pays").json()
+    mois = requests.get(f"{API_URL}/mois").json()
+
     end = time.time()
-    
-    st.write("Temps de refresh :", end - start)
-    
+
+    st.info(f"Temps total de refresh : {round(end - start, 3)} secondes")
+
     st.subheader("KPIs")
     st.write(kpis)
-    
+
     st.subheader("Ventes par pays")
     st.write(pays)
-    
+
     st.subheader("Ventes par mois")
     st.write(mois)
+
+except Exception as e:
+    st.error("Impossible de se connecter à l'API Flask !")
+    st.write(e)

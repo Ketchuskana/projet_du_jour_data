@@ -3,23 +3,20 @@ from pymongo import MongoClient
 
 app = Flask(__name__)
 
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb://mongo:27017/")
 db = client["projet_data"]
 
 @app.route("/kpis")
-def get_kpis():
-    data = list(db.kpis.find({}, {"_id": 0}))
-    return jsonify(data)
+def kpis():
+    return jsonify(list(db.kpis.find({}, {"_id": 0})))
 
 @app.route("/pays")
-def get_pays():
-    data = list(db.ventes_par_pays.find({}, {"_id": 0}))
-    return jsonify(data)
+def pays():
+    return jsonify(list(db.ventes_par_pays.find({}, {"_id": 0})))
 
 @app.route("/mois")
-def get_mois():
-    data = list(db.ventes_par_mois.find({}, {"_id": 0}))
-    return jsonify(data)
+def mois():
+    return jsonify(list(db.ventes_par_mois.find({}, {"_id": 0})))
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

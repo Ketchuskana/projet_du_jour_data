@@ -9,8 +9,6 @@ def send_to_mongo(df, collection_name):
     client = MongoClient("mongodb://localhost:27017/")
     db = client["projet_data"]
 
-    print(db.list_collection_names())
-
     collection = db[collection_name]
 
     # Vider l’ancienne collection
